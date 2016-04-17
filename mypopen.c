@@ -103,8 +103,19 @@ FILE * mypopen(const char * command, const char * type)
 
 	if (pid == EXIT_ERROR)
 	{
-		close(fd[PIPE_WRITE]);
-		close(fd[PIPE_READ]);
+		// errno gets set by fork
+		
+		// reset pid to avoid problems in mypclose()
+		pid = 0;
+
+		if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
+		{
+			// @todo now what?
+		}
+		if(close(fd[PIPE_READ]) == EXIT_ERROR)
+		{
+			// @todo now what?
+		}
 		return NULL;
 	}
 	else if(pid == 0)
@@ -123,35 +134,37 @@ int mypclose(FILE * stream)
 {
 	if (_fp == NULL)
 	{
+		// @todo do I have to close FILE * stream?
 		errno = ECHILD;
 		return EXIT_ERROR;
 	}
 
 	if (stream == NULL)
 	{
+		// @todo do I have to close _fp?
 		errno = EINVAL;
 		return EXIT_ERROR;
 	}
 
 	if (stream != _fp)
 	{
+		// @todo do I have to close stream and _fp?
 		errno = EINVAL;
 		return EXIT_ERROR;
 	}
 
-	if (fclose(_fp) == EOF)
+	if (fclose(_fp) != 0)
     {
     	_fp = NULL;
-        return (EXIT_ERROR);
+        return EXIT_ERROR;
     }
 
     _fp = NULL;
     /* @todo I feel like we have to close more here... */
 
     int status = 0;
-
 	int wpid = 0;
-	errno = 0;
+
 	while((wpid = waitpid(pid, &status, 0)) != pid)
 	{
 		if(wpid == EXIT_ERROR)
