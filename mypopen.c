@@ -14,6 +14,7 @@
  * @todo resolve todos
  * @todo comment includes to show why we need them
  * @todo add an include for FILE * in mypopen.h
+ * @todo look over comments
  */
 
 #include <stdio.h>
@@ -26,32 +27,32 @@
 #include "mypopen.h"
 
 /**
- * @brief defines the location of the read end of the pipe in the Filedescritor array
+ * defines the location of the read end of the pipe in the Filedescritor array
  */
 #define PIPE_READ 0
 
 /**
- * @brief defines the location of the write end of the pipe in the Filedescritor array
+ * defines the location of the write end of the pipe in the Filedescritor array
  */
 #define PIPE_WRITE 1
 
-/**
- * @brief size of the File Descriptor array
+/** 
+ * size of the File Descriptor array 
  */
 #define file_desc_arr_size 2
 
 /**
- * @brief File Descriptor array
+ * File Descriptor array
  */
 static int fd[file_desc_arr_size];
 
 /**
- * @brief File pointer to the current open steam
+ * File pointer to the current open steam
  */
 static FILE * _fp = NULL;
 
 /**
- * @brief the process id of the child
+ * the process id of the child
  */
 static int pid = 0;
 
@@ -179,121 +180,85 @@ int mypclose(FILE * stream)
 /* @todo how do we handle errors after the first one. we will not get them in our application */
 static void fork_child(const char * command, const char * type)
 {
+	int _toDup;
+	int _stdFd;
+
 	if (type[0] == 'w')
 	{
-		if(dup2(fd[PIPE_READ], STDIN_FILENO) == EXIT_ERROR)
-		{
-			if (close(fd[PIPE_WRITE]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we return here
-			}
-			if (close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we return here
-			}
-			exit(1);
-		}
-		if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-		{
-			if(close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo do we need to check for an error here?
-			}
-			exit(1);
-		}
-		if(close(fd[PIPE_READ]) == EXIT_ERROR)
-		{
-			// @todo do we try calling close again?
-			exit(1);
-		}
+		_toDup = PIPE_READ;
+		_stdFd = STDIN_FILENO;
 	}
-	else
+	else /* type == "r" */
 	{
-		// stdout
-		if(dup2(fd[PIPE_WRITE], STDOUT_FILENO) == EXIT_ERROR)
+		_toDup = PIPE_WRITE;
+		_stdFd = STDOUT_FILENO;
+	}
+
+	if(dup2(fd[_toDup], _stdFd) == EXIT_ERROR)
+	{
+		if (close(fd[PIPE_WRITE]) == EXIT_ERROR)
 		{
-			if (close(fd[PIPE_WRITE]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we return here
-			}
-			if (close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we return here
-			}
-			exit(1);
+			// @todo what errno value do we return here
 		}
+		if (close(fd[PIPE_READ]) == EXIT_ERROR)
+		{
+			// @todo what errno value do we return here
+		}
+		exit(EXIT_FAILURE);
+	}
+	if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
+	{
 		if(close(fd[PIPE_READ]) == EXIT_ERROR)
 		{
-			if(close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo do we need to check for an error here?
-			}
-			exit(1);
+			// @todo do we need to check for an error here?
 		}
-
-		if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-		{
-			// @todo do we try calling close again?
-			exit(1);
-		}
+		exit(EXIT_FAILURE);
+	}
+	if(close(fd[PIPE_READ]) == EXIT_ERROR)
+	{
+		// @todo do we try calling close again?
+		exit(EXIT_FAILURE);
 	}
 
 	// no begin executing the command
 	if (execl("/bin/sh", "sh", "-c", command, NULL) == EXIT_ERROR)
     {
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-
-    /* we never reach this */
+    /* we should never reach this point */
 }
 
 static FILE * fork_parent(const char * type)
 {
+	int _toClose;
+	int _toOpen;
 	if(type[0] == 'w')
 	{
-		if(close(fd[PIPE_READ]) == EXIT_ERROR)
-		{
-			if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-			{
-				// @todo do we need that if here?
-				return NULL;
-			}
-			return NULL;
-		}
-		_fp = fdopen(fd[PIPE_WRITE], type);
-		if(_fp == NULL)
-		{
-			if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we need here?
-				return NULL;
-			}
-			return NULL;
-		}
-		return _fp;
+		_toOpen = PIPE_WRITE;
+		_toClose = PIPE_READ;
 	}
-	else
+	else /* type == "r" */
 	{
-		if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-		{
-			if(close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo do we need that if here?
-				return NULL;
-			}
-			return NULL;
-		}
-
-		_fp = fdopen(fd[PIPE_READ], type);
-		if(_fp == NULL)
-		{
-			if(close(fd[PIPE_READ]) == EXIT_ERROR)
-			{
-				// @todo what errno value do we need here?
-				return NULL;
-			}
-			return NULL;
-		}
-		return _fp;
+		_toOpen = PIPE_READ;
+		_toClose = PIPE_WRITE;	
 	}
+
+	if(close(fd[_toClose]) == EXIT_ERROR)
+	{
+		if(close(fd[_toOpen]) == EXIT_ERROR)
+		{
+			// @todo do we need that if here?
+		}
+		return NULL;
+	}
+
+	_fp = fdopen(fd[_toOpen], type);
+	if(_fp == NULL)
+	{
+		if(close(fd[_toOpen]) == EXIT_ERROR)
+		{
+			// @todo what errno value do we need here?
+		}
+	}
+	return _fp;
 }

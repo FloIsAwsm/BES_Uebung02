@@ -40,7 +40,7 @@ EXCLUDE_PATTERN=footrulewidth
 ## --------------------------------------------------------------- targets --
 ##
 
-all: mypopen
+## all: mypopen
 
 popentest: mypopen
 	$(CC) -o popentest mypopen.o -lpopentest

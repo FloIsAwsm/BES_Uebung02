@@ -15,8 +15,18 @@
 #ifndef MYPOPEN_H
 #define MYPOPEN_H
 
+/**
+ * exit value if the function was successful
+ */
 #define EXIT_SUCCESS 0
+
+/**
+ * exit value if the function was not successful
+ */
 #define EXIT_FAILURE 1
+/**
+ * return value in case of an error
+ */
 #define EXIT_ERROR  -1
 
 /**
