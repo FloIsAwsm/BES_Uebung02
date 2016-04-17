@@ -60,3 +60,18 @@ if (stream != _fp)
 ```
 
 ### 4.) Muss ich nachdem ich _fp schließe auch noch den File Descriptor schließen?
+```C
+if (fclose(_fp) != 0)
+{
+	_fp = NULL;
+    return EXIT_ERROR;
+}
+
+_fp = NULL;
+/*
+if(close(fd[PIPE_READ]) == EXIT_ERROR)
+{
+	return EXIT_ERROR;
+}
+*/
+```

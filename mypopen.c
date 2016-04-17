@@ -154,13 +154,13 @@ int mypclose(FILE * stream)
 	}
 
 	if (fclose(_fp) != 0)
-    {
-    	_fp = NULL;
-        return EXIT_ERROR;
-    }
+	{
+		_fp = NULL;
+	    return EXIT_ERROR;
+	}
 
-    _fp = NULL;
-    /* @todo I feel like we have to close more here... */
+	_fp = NULL;
+	/* @todo I feel like we have to close more here... */
 
     int status = 0;
 	int wpid = 0;
