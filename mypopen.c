@@ -11,19 +11,14 @@
  * @version 100
  * 
  * @todo rework function comments
- * @todo resolve todos
- * @todo comment includes to show why we need them
- * @todo add an include for FILE * in mypopen.h
- * @todo look over comments
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <stdio.h> // fdopen
+#include <stdlib.h> // exit
+#include <unistd.h> // dup2, STDIN_FILENO...
+#include <errno.h> // errno, EINVAL...
+#include <string.h> //strlen
+#include <sys/wait.h> // waitpid()
 #include "mypopen.h"
 
 /**
@@ -77,8 +72,23 @@ static FILE * fork_parent(const char * type);
 FILE * mypopen(const char * command, const char * type)
 {
 	// input validation
-	// @todo make this a litte easier to read
-	if (command == NULL || type == NULL || strlen(type) != 1 || (!(type[0] == 'w' || type[0] == 'r')))
+
+	// start off by testing for NULL pointers
+	if (command == NULL || type == NULL)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// if the type string size is not valid
+	if(strlen(type) != 1)
+	{
+		errno = EINVAL;
+		return NULL;
+	}
+
+	//if type is neither "w" or "r"
+	if(*type != 'w' && *type != 'r')
 	{
 		errno = EINVAL;
 		return NULL;
@@ -103,19 +113,14 @@ FILE * mypopen(const char * command, const char * type)
 
 	if (pid == EXIT_ERROR)
 	{
-		// errno gets set by fork
+		// save errno if it is overwritten by the close() calls
+		int _err = errno;
 		
-		// reset pid to avoid problems in mypclose()
-		pid = 0;
+		close(fd[PIPE_WRITE]);
+		close(fd[PIPE_READ]);
 
-		if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
-		{
-			// @todo now what?
-		}
-		if(close(fd[PIPE_READ]) == EXIT_ERROR)
-		{
-			// @todo now what?
-		}
+		errno = _err;
+
 		return NULL;
 	}
 	else if(pid == 0)
@@ -134,21 +139,19 @@ int mypclose(FILE * stream)
 {
 	if (_fp == NULL)
 	{
-		// @todo do I have to close FILE * stream?
 		errno = ECHILD;
 		return EXIT_ERROR;
 	}
 
 	if (stream == NULL)
 	{
-		// @todo do I have to close _fp?
 		errno = EINVAL;
 		return EXIT_ERROR;
 	}
 
 	if (stream != _fp)
 	{
-		// @todo do I have to close stream and _fp?
+		// @todo do we have to close it here? oO
 		errno = EINVAL;
 		return EXIT_ERROR;
 	}
@@ -160,7 +163,6 @@ int mypclose(FILE * stream)
 	}
 
 	_fp = NULL;
-	/* @todo I feel like we have to close more here... */
 
     int status = 0;
 	int wpid = 0;
@@ -190,7 +192,6 @@ int mypclose(FILE * stream)
 	}
 }
 
-/* @todo how do we handle errors after the first one. we will not get them in our application */
 static void fork_child(const char * command, const char * type)
 {
 	int _toDup;
@@ -209,32 +210,29 @@ static void fork_child(const char * command, const char * type)
 
 	if(dup2(fd[_toDup], _stdFd) == EXIT_ERROR)
 	{
-		if (close(fd[PIPE_WRITE]) == EXIT_ERROR)
-		{
-			// @todo what errno value do we return here
-		}
-		if (close(fd[PIPE_READ]) == EXIT_ERROR)
-		{
-			// @todo what errno value do we return here
-		}
+		int _err = errno;
+
+		close(fd[PIPE_WRITE]);
+		close(fd[PIPE_READ]);
+		
+		errno = _err;
 		exit(EXIT_FAILURE);
 	}
 	if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
 	{
-		if(close(fd[PIPE_READ]) == EXIT_ERROR)
-		{
-			// @todo do we need to check for an error here?
-		}
+		int _err = errno;
+		close(fd[PIPE_READ]);
+
+		errno = _err;
 		exit(EXIT_FAILURE);
 	}
 	if(close(fd[PIPE_READ]) == EXIT_ERROR)
 	{
-		// @todo do we try calling close again?
 		exit(EXIT_FAILURE);
 	}
 
 	// no begin executing the command
-	if (execl("/bin/sh", "sh", "-c", command, NULL) == EXIT_ERROR)
+	if (execl("/bin/sh", "sh", "-c", command, (char*) NULL) == EXIT_ERROR)
     {
         exit(EXIT_FAILURE);
     }
@@ -258,20 +256,18 @@ static FILE * fork_parent(const char * type)
 
 	if(close(fd[_toClose]) == EXIT_ERROR)
 	{
-		if(close(fd[_toOpen]) == EXIT_ERROR)
-		{
-			// @todo do we need that if here?
-		}
+		int _err = errno;
+		close(fd[_toOpen]);
+		errno = _err;
 		return NULL;
 	}
 
 	_fp = fdopen(fd[_toOpen], type);
 	if(_fp == NULL)
 	{
-		if(close(fd[_toOpen]) == EXIT_ERROR)
-		{
-			// @todo what errno value do we need here?
-		}
+		int _err = errno;
+		close(fd[_toOpen]);
+		errno = _err;
 	}
 	return _fp;
 }
