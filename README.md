@@ -15,6 +15,7 @@ if (command == NULL || type == NULL || strlen(type) != 1 || (!(type[0] == 'w' ||
 ### 2.) Was macht man im Fehlerfall falls nach einem fehlerhaften Aufruf noch ein Fehler eintritt?
 Beispiel:
 ```C
+/* errno wegspeichern. fehler ignorieren und kommentieren */
 if (pid == EXIT_ERROR)
 {
 	// errno gets set by fork
@@ -37,6 +38,7 @@ if (pid == EXIT_ERROR)
 ### 3.) Wann schließt man welchen FILE * ?
 Beispiel:
 ```C
+/* ich räum nur meinen müll weg! */
 if (_fp == NULL)
 {
 	// @todo do I have to close FILE * stream?
@@ -68,7 +70,7 @@ if (fclose(_fp) != 0)
 }
 
 _fp = NULL;
-/*
+/* muss man nicht machen
 if(close(fd[PIPE_READ]) == EXIT_ERROR)
 {
 	return EXIT_ERROR;
