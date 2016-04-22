@@ -104,7 +104,7 @@ FILE * mypopen(const char * command, const char * type)
 	// open pipe
 	if(pipe(fd) != 0)
 	{
-		// errno gets set by pipe
+		// errno get s set by pipe
 		return NULL;
 	}
 
@@ -116,8 +116,8 @@ FILE * mypopen(const char * command, const char * type)
 		// save errno if it is overwritten by the close() calls
 		int _err = errno;
 		
-		close(fd[PIPE_WRITE]);
-		close(fd[PIPE_READ]);
+		(void) close(fd[PIPE_WRITE]);
+		(void) close(fd[PIPE_READ]);
 
 		errno = _err;
 
@@ -211,8 +211,8 @@ static void fork_child(const char * command, const char * type)
 	{
 		int _err = errno;
 
-		close(fd[PIPE_WRITE]);
-		close(fd[PIPE_READ]);
+		(void) close(fd[PIPE_WRITE]);
+		(void) close(fd[PIPE_READ]);
 		
 		errno = _err;
 		exit(EXIT_FAILURE);
@@ -220,7 +220,7 @@ static void fork_child(const char * command, const char * type)
 	if(close(fd[PIPE_WRITE]) == EXIT_ERROR)
 	{
 		int _err = errno;
-		close(fd[PIPE_READ]);
+		(void) close(fd[PIPE_READ]);
 
 		errno = _err;
 		exit(EXIT_FAILURE);
@@ -256,7 +256,7 @@ static FILE * fork_parent(const char * type)
 	if(close(fd[_toClose]) == EXIT_ERROR)
 	{
 		int _err = errno;
-		close(fd[_toOpen]);
+		(void) close(fd[_toOpen]);
 		errno = _err;
 		return NULL;
 	}
@@ -265,7 +265,7 @@ static FILE * fork_parent(const char * type)
 	if(_fp == NULL)
 	{
 		int _err = errno;
-		close(fd[_toOpen]);
+		(void) close(fd[_toOpen]);
 		errno = _err;
 	}
 	return _fp;

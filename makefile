@@ -57,7 +57,7 @@ distclean: clean
 
 doc: html pdf
 
-html:
+html: mkdoc
 	$(DOXYGEN) doxygen.dcf
 
 pdf: html
@@ -70,6 +70,9 @@ pdf: html
 	$(RM) *.pdf *.html *.tex *.aux *.sty *.log *.eps *.out *.ind *.idx \
 	      *.ilg *.toc *.tps Makefile && \
 	$(MV) refman.save refman.pdf
+
+mkdoc:
+	mkdir -p doc
 
 ##
 ## ---------------------------------------------------------- dependencies --
