@@ -25,7 +25,8 @@ MV=mv
 GREP=grep
 DOXYGEN=doxygen
 
-OBJECTS=main.o mypopen.o
+OBJECTS= mypopen.o
+BIN= popentest test-pipe
 
 EXCLUDE_PATTERN=footrulewidth
 
@@ -40,19 +41,16 @@ EXCLUDE_PATTERN=footrulewidth
 ## --------------------------------------------------------------- targets --
 ##
 
-## all: mypopen
+all: $(BIN) doc
 
-popentest: mypopen
-	$(CC) -o popentest mypopen.o -lpopentest
+popentest: $(OBJECTS)
+	$(CC) -o $@ $^ -lpopentest
 
-test-pipe: mypopen
-	$(CC) -o test-pipe mypopen.o -ltest-pipe
-
-mypopen: $(OBJECTS)
-	$(CC) $(CFLAGS) -o $@ $^
+test-pipe: $(OBJECTS)
+	$(CC) -o $@ $^ -ltest-pipe
 
 clean:
-	$(RM) *.o *~ mypopen
+	$(RM) *.o *~ $(BIN)
 
 distclean: clean
 	$(RM) -r doc

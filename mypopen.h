@@ -15,6 +15,8 @@
 #ifndef MYPOPEN_H
 #define MYPOPEN_H
 
+#include <stdio.h> // FILE *
+
 /**
  * exit value if the function was successful
  */
@@ -37,7 +39,7 @@
  * @param command shell command to execute in the child process
  * @param type specifies the desired end of the pipe to be returned. should not be anything other than "r" or "w"
  * 
- * @return file pointer of the pipe
+ * @return file pointer of the pipe or NULL if an error occurs
  */
 FILE * mypopen(const char * command, const char * type);
 
@@ -47,7 +49,7 @@ FILE * mypopen(const char * command, const char * type);
  * to return the childs exit status
  * 
  * @param stream file pointer to the parents pipe end
- * @return exit status of the child process or -1 in case of an error
+ * @return exit status of the child process or EXIT_ERROR in case of an error
  */
 int mypclose(FILE * stream);
 

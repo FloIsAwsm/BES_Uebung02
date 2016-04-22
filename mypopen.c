@@ -10,15 +10,13 @@
  * 
  * @version 100
  * 
- * @todo rework function comments
  */
 
-#include <stdio.h> // fdopen
 #include <stdlib.h> // exit
 #include <unistd.h> // dup2, STDIN_FILENO...
 #include <errno.h> // errno, EINVAL...
 #include <string.h> //strlen
-#include <sys/wait.h> // waitpid()
+#include <sys/wait.h> // waitpid
 #include "mypopen.h"
 
 /**
@@ -42,7 +40,7 @@
 static int fd[file_desc_arr_size];
 
 /**
- * File pointer to the current open steam
+ * File pointer to the current open stream
  */
 static FILE * _fp = NULL;
 
@@ -52,20 +50,22 @@ static FILE * _fp = NULL;
 static int pid = 0;
 
 /**
- * @brief handles the childprocess after fork 
- * @details todo
+ * @brief handles the childprocess after we fork 
+ * @details replaces STDIN or STDOUT with the correct end of our pipe and
+ * executes the command. If an error occurs the child proccess calls exit.
  * 
- * @param command the command later passed to the shell
+ * @param command the command later passed to the shell with an execl call
  * @param type the direction of the pipe
  */
 static void fork_child(const char * command, const char * type);
 
 /**
- * @brief handles the parent process after fork
- * @details todo
+ * @brief handles the parent process after we fork
+ * @details opens the file descriptor using fdopen and returns it
  * 
  * @param type defines the direction of the pipe to be returned
- * @return returnes a FILE pointer to the pipe stream
+ * 
+ * @return returnes a FILE pointer to the pipe stream or NULL if an error occurs
  */
 static FILE * fork_parent(const char * type);
 
@@ -87,7 +87,7 @@ FILE * mypopen(const char * command, const char * type)
 		return NULL;
 	}
 
-	//if type is neither "w" or "r"
+	// if type is neither "w" or "r"
 	if(*type != 'w' && *type != 'r')
 	{
 		errno = EINVAL;
@@ -151,7 +151,6 @@ int mypclose(FILE * stream)
 
 	if (stream != _fp)
 	{
-		// @todo do we have to close it here? oO
 		errno = EINVAL;
 		return EXIT_ERROR;
 	}
